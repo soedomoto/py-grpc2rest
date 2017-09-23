@@ -37,6 +37,38 @@ def get_service_identify(stubs, service_name):
         return get_service_identify_from_pb_file(md)
 
 
+def list_services_from_pb_file(pb2):
+    p = descriptor_pb2.FileDescriptorProto()
+    pb2.DESCRIPTOR.CopyToProto(p)
+
+    message_types = dict()
+    for m in p.message_type:
+        fields = list()
+        for d, v in m.ListFields():
+            if d.name == 'field':
+                for f in v:
+                    fields.append(f.name)
+        message_types[m.name] = fields
+
+    services = dict()
+    for s in p.service:
+        methods = dict()
+        for m in s.method:
+            attrs = dict()
+            for d, v in m.ListFields():
+                attrs[d.name] = v
+
+            input_type = attrs['input_type']
+            input_type_parts = input_type.split('.')
+            input_type = input_type_parts[len(input_type_parts)-1]
+            input_type_fields = message_types[input_type] if input_type in message_types else list()
+
+            methods[m.name] = input_type_fields
+        services[s.name] = methods
+
+    return services
+
+
 def get_service_identify_from_pb_file(pb2):
     method_mapping = dict()
     p = descriptor_pb2.FileDescriptorProto()

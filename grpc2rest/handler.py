@@ -14,12 +14,22 @@ class IndexHandler(tornado.web.RequestHandler):
         Here are the stubs!<br>
         <hr>
         '''.format(str(self.server))
+
         for name, stub in self.stubs.items():
-            html += '<h1>%s</h1>' % name
+            html += '<h2>%s</h2>' % name
+
+            html += '<h3>Properties:</h3>'
             for k, v in stub.__dict__.items():
                 html += '%s=%s' % (k, v) + '<br>'
-            html += 'server=%s' % (str(self.server))
+
+            html += '<h3>Endpoints:</h3>'
+            for sn, s in stub.endpoints.items():
+                html += '<h4>{}:</h4><ul>'.format(sn)
+                for mn, p in s.items():
+                    html += '<li><b>{}</b>. Parameters = {}</li>'.format(mn, ', '.join(p))
+                html += '</ul>'
             html += '<hr>'
+
         self.write(html)
 
 
