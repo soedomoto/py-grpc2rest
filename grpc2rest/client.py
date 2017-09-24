@@ -1,4 +1,6 @@
 from random import randint
+
+import grpc
 from grpc._cython.cygrpc import ConnectivityState
 from grpc.beta import implementations
 
@@ -18,43 +20,9 @@ class ChannelPool(object):
         self.working_channel_indexs = set()
         self.connect()
 
-    def flush_channels(self):
-        # call this method to check all the channels status
-        # if channel connection is failed or idle
-        # we could try to reconnect sometime
-        channels = [self.channels[i] for i in self.working_channel_indexs]
-        for channel in channels:
-            try:
-                state = channel._low_channel.check_connectivity_state(True)
-                if state == ConnectivityState.CONNECTING:
-                    self.on_channel_connection(channel, state)
-                elif state == ConnectivityState.TRANSIENT_FAILURE:
-                    self.on_transient_failure(channel, state)
-                elif state == ConnectivityState.FATAL_FAILURE:
-                    self.on_fatal_failure(channel, state)
-                else:
-                    self.on_success(channel, state)
-            except Exception as e:
-                self.on_exception(channel, state, e)
-
-    def on_channel_connection(self, channel, state):
-        pass
-
-    def on_transient_failure(self, channel, state):
-        pass
-
-    def on_fatal_failure(self, channel, state):
-        pass
-
-    def on_success(self, channel, state):
-        pass
-
-    def on_exception(self, channel, state, e):
-        pass
-
     def connect(self):
         for i in range(self.pool_size):
-            channel = implementations.insecure_channel(self.host, self.port)
+            channel = grpc.insecure_channel('{}:{}'.format(self.host, self.port))
             stub = self.service_stub_fn(channel)
             # we need to make channels[i] == stubs[i]->channel
             self.channels.append(channel)
@@ -79,7 +47,6 @@ class ChannelPool(object):
         self.shutdown()
 
 
-client_cache = None
 class Client(object):
     def __init__(self, host='0.0.0.0', port=50051, pool_size=10, service_stub_fn=None):
         self.pool = ChannelPool(host, port, pool_size, service_stub_fn)
@@ -87,13 +54,11 @@ class Client(object):
         self.update_cache()
 
     def update_cache(self):
-        global client_cache
-        client_cache = self
+        raise Exception('Not Implemented')
 
     @classmethod
     def get_cache(cls):
-        global client_cache
-        return client_cache
+        raise Exception('Not Implemented')
 
     def shutdown(self):
         self.pool.shutdown()

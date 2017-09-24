@@ -2,8 +2,32 @@ import imp
 import importlib
 import json
 import sys
+import re
+from collections import OrderedDict
+
 from google.protobuf import descriptor_pb2, json_format
 from grpc2rest.exceptions import ProtoParseException
+from grpc2rest.protobuf_to_dict import protobuf_to_dict
+
+
+def camel_to_snake_case(camel):
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', camel)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+
+def import_module(path, name, import_type='module'):
+    if import_type == 'path':
+        if name in sys.modules.keys():
+            md = importlib.import_module(name)
+        else:
+            md = imp.load_source(name, path)
+    else:
+        md = importlib.import_module(name)
+
+    return md
+
+
+
 
 
 def search_method_option_in_service(stubs, service, call):
@@ -50,11 +74,11 @@ def list_services_from_pb_file(pb2):
                     fields.append(f.name)
         message_types[m.name] = fields
 
-    services = dict()
+    services = OrderedDict()
     for s in p.service:
-        methods = dict()
+        methods = OrderedDict()
         for m in s.method:
-            attrs = dict()
+            attrs = OrderedDict()
             for d, v in m.ListFields():
                 attrs[d.name] = v
 

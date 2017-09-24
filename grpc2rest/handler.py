@@ -1,6 +1,6 @@
 import tornado.web
 from tornado import gen
-from grpc2rest.utils import search_method_option_in_service, dynamic_client_getter, pb2json
+from grpc2rest.utils import search_method_option_in_service, dynamic_client_getter, pb2json, protobuf_to_dict
 
 
 class IndexHandler(tornado.web.RequestHandler):
@@ -10,24 +10,21 @@ class IndexHandler(tornado.web.RequestHandler):
         self.debug = debug
 
     def get(self):
-        html = '''{}<br>
-        Here are the stubs!<br>
+        html = '''<h1>{}</h1>
         <hr>
         '''.format(str(self.server))
 
         for name, stub in self.stubs.items():
-            html += '<h2>%s</h2>' % name
+            html += '<h2>{}</h2>'.format(name)
 
             html += '<h3>Properties:</h3>'
             for k, v in stub.__dict__.items():
-                html += '%s=%s' % (k, v) + '<br>'
+                html += '<b>{}</b> = {}<br>'.format(k, v)
 
             html += '<h3>Endpoints:</h3>'
-            for sn, s in stub.endpoints.items():
-                html += '<h4>{}:</h4><ul>'.format(sn)
-                for mn, p in s.items():
-                    html += '<li><b>{}</b>. Parameters = {}</li>'.format(mn, ', '.join(p))
-                html += '</ul>'
+            for mn, p in stub.endpoints.items():
+                html += '<li><b>{}</b>. Parameters = {}</li>'.format(mn, ', '.join(p))
+            html += '</ul>'
             html += '<hr>'
 
         self.write(html)
@@ -81,18 +78,18 @@ class ServiceHandler(tornado.web.RequestHandler):
             args[k] = v.decode('ascii')
         with_call = args.get('with_call') == '1'
 
-        # if self.server.request_handler:
-        #     args['metadata'] = self.server.request_handler(self.request)
-
         ret = dict()
         response = None
 
         try:
             if with_call:
+                fn = getattr(client, call)
+
                 args['with_call'] = True
-                response, call = getattr(client, call)(**args)
+                response, call = fn(**args)
             else:
-                response = getattr(client, call)(**args)
+                fn = getattr(client, call)
+                response = fn(**args)
         except Exception as e:
             self.set_status(400)
             ret = dict(error='no such a service')
@@ -103,9 +100,9 @@ class ServiceHandler(tornado.web.RequestHandler):
             try:
                 status_code = self.server.status_handler(response)
                 self.set_status(status_code)
-                ret = pb2json(response)
-            except:
+                ret = protobuf_to_dict(response)
+            except Exception as e:
                 self.set_status(400)
-                ret = dict(error='cannot load from pb')
+                ret = dict(error=str(e))
 
         self.write(ret)
