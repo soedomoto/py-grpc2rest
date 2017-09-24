@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+// option java_multiple_files = true;
+// option java_package = "io.grpc.examples.area";
+// option java_outer_classname = "AreaProto";
+// option objc_class_prefix = "AREA";
+
+package bps_area.grpc.interfaces;
+import "google/protobuf/empty.proto";
+
+message Province {
+    string id = 1;
+    string code = 2;
+    string name = 3;
+    string lastId = 4;
+}
+
+message Regency {
+    string id = 1;
+    string code = 2;
+    string name = 3;
+    Province province = 4;
+    string lastId = 5;
+}
+
+message District {
+    string id = 1;
+    string code = 2;
+    string name = 3;
+    Regency regency = 4;
+    string lastId = 5;
+}
+
+message Village {
+    string id = 1;
+    string code = 2;
+    string name = 3;
+    District district = 4;
+    string lastId = 5;
+}
+
+message CensusBlock {
+    string id = 1;
+    string code = 2;
+    string name = 3;
+    Village village = 4;
+    string lastId = 5;
+}
+
+message AreaID {
+    string id = 1;
+}
+
+message SearchQuery {
+    string query = 1;
+}
+
+message Response {
+    bool success = 1;
+    string message = 2;
+    string data = 3;
+}
+
+service ProvinceService {
+    rpc list(google.protobuf.Empty) returns (stream Province) {}
+    rpc get(AreaID) returns (Province) {}
+    rpc add(Province) returns (Response) {}
+    rpc addGet(Province) returns (Province) {}
+    rpc update(Province) returns (Response) {}
+    rpc updateGet(Province) returns (Province) {}
+    rpc delete(AreaID) returns (Response) {}
+    rpc search(SearchQuery) returns (stream Province) {}
+}
+
+service RegencyService {
+    rpc list(google.protobuf.Empty) returns (stream Regency) {}
+    rpc listBy(Province) returns (stream Regency) {}
+    rpc get(AreaID) returns (Regency) {}
+    rpc add(Regency) returns (Response) {}
+    rpc addGet(Regency) returns (Regency) {}
+    rpc update(Regency) returns (Response) {}
+    rpc updateGet(Regency) returns (Regency) {}
+    rpc delete(AreaID) returns (Response) {}
+    rpc search(SearchQuery) returns (stream Regency) {}
+}
+
+service DistrictService {
+    rpc list(google.protobuf.Empty) returns (stream District) {}
+    rpc listBy(Regency) returns (stream District) {}
+    rpc get(AreaID) returns (District) {}
+    rpc add(District) returns (Response) {}
+    rpc addGet(District) returns (District) {}
+    rpc update(District) returns (Response) {}
+    rpc updateGet(District) returns (District) {}
+    rpc delete(AreaID) returns (Response) {}
+    rpc search(SearchQuery) returns (stream District) {}
+}
+
+service VillageService {
+    rpc list(google.protobuf.Empty) returns (stream Village) {}
+    rpc listBy(District) returns (stream Village) {}
+    rpc get(AreaID) returns (Village) {}
+    rpc add(Village) returns (Response) {}
+    rpc addGet(Village) returns (Village) {}
+    rpc update(Village) returns (Response) {}
+    rpc updateGet(Village) returns (Village) {}
+    rpc delete(AreaID) returns (Response) {}
+    rpc search(SearchQuery) returns (stream Village) {}
+}
+
+service CensusBlockService {
+    rpc list(google.protobuf.Empty) returns (stream CensusBlock) {}
+    rpc listBy(Village) returns (stream CensusBlock) {}
+    rpc get(AreaID) returns (CensusBlock) {}
+    rpc add(CensusBlock) returns (Response) {}
+    rpc addGet(CensusBlock) returns (CensusBlock) {}
+    rpc update(CensusBlock) returns (Response) {}
+    rpc updateGet(CensusBlock) returns (CensusBlock) {}
+    rpc delete(AreaID) returns (Response) {}
+    rpc search(SearchQuery) returns (stream CensusBlock) {}
+}
